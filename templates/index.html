@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Resume Analyzer</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin: 50px; }
+    input, textarea { margin: 10px; width: 300px; padding: 8px; }
+    .result { margin-top: 30px; text-align: left; display: inline-block; background: #f7f7f7; padding: 20px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>📄 Resume Analyzer</h2>
+  <form action="/analyze" method="POST" enctype="multipart/form-data">
+    <label>Upload Resume (PDF/TXT):</label><br>
+    <input type="file" name="resume" required><br><br>
+
+    <label>Paste Job Description (optional):</label><br>
+    <textarea name="job_desc" rows="6" placeholder="Enter job description here..."></textarea><br>
+    <button type="submit">Analyze Resume</button>
+  </form>
+
+  {% if results %}
+  <div class="result">
+    <h3>Analysis Results:</h3>
+    <p><strong>Skills Found:</strong> {{ results.skills }}</p>
+    <p><strong>Education:</strong> {{ results.education }}</p>
+    <p><strong>Experience (Years):</strong> {{ results.experience }}</p>
+    {% if job_desc %}
+    <p><strong>Job Match Score:</strong> {{ results.match_score }}%</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</body>
+</html>
