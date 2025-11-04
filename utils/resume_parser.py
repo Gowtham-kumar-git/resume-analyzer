@@ -1,35 +1,47 @@
-import re
 from textblob import TextBlob
-from PyPDF2 import PdfReader
+import PyPDF2
+import re
 
-def extract_text(file_path):
+def extract_text(filepath):
     text = ""
-    if file_path.endswith(".pdf"):
-        reader = PdfReader(file_path)
-        for page in reader.pages:
-            text += page.extract_text() or ""
+    if filepath.lower().endswith(".pdf"):
+        with open(filepath, "rb") as f:
+            reader = PyPDF2.PdfReader(f)
+            for page in reader.pages:
+                text += page.extract_text() or ""
     else:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            text = f.read()
+        text = open(filepath, "r", encoding="utf-8", errors="ignore").read()
     return text
 
 def analyze_resume(text, job_desc=""):
-    skills = re.findall(r"\b(Python|Java|C\+\+|SQL|HTML|CSS|JavaScript|AWS|Docker|Flask|TensorFlow)\b", text, re.I)
-    education = re.findall(r"\b(B\.?Tech|M\.?Tech|B\.?Sc|M\.?Sc|B\.?E|M\.?E|Bachelor|Master|Ph\.?D)\b", text, re.I)
-    exp_years = re.findall(r"(\d+)\s+years?", text)
-    exp = max([int(x) for x in exp_years], default=0)
+    blob = TextBlob(text)
+    word_count = len(blob.words)
+    summary = " ".join(blob.sentences[:3]) if len(blob.sentences) > 0 else "No summary available."
 
-    # Job match score
-    match_score = 0
+    keywords_found, missing_keywords = [], []
     if job_desc:
-        resume_blob = TextBlob(text.lower())
-        job_blob = TextBlob(job_desc.lower())
-        common_words = len(set(resume_blob.words) & set(job_blob.words))
-        match_score = round(common_words / (len(job_blob.words) + 1) * 100, 2)
+        job_words = re.findall(r'\b[a-zA-Z]{4,}\b', job_desc.lower())
+        for word in set(job_words):
+            if word in text.lower():
+                keywords_found.append(word)
+            else:
+                missing_keywords.append(word)
+
+    readability = estimate_readability(text)
 
     return {
-        "skills": sorted(set(skills)),
-        "education": sorted(set(education)),
-        "experience": exp,
-        "match_score": match_score
+        "word_count": word_count,
+        "keywords_found": ", ".join(keywords_found[:15]) or "None",
+        "missing_keywords": ", ".join(missing_keywords[:15]) or "None",
+        "readability": f"{readability:.2f}/100 (higher is easier to read)",
+        "summary": summary
     }
+
+def estimate_readability(text):
+    words = len(re.findall(r'\w+', text))
+    sentences = len(re.findall(r'[.!?]', text))
+    syllables = len(re.findall(r'[aeiouyAEIOUY]', text))
+    if sentences == 0 or words == 0:
+        return 0
+    score = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words)
+    return max(0, min(100, score))
