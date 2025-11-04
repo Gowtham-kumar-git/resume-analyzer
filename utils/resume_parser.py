@@ -16,7 +16,7 @@ def extract_text(filepath):
 def analyze_resume(text, job_desc=""):
     blob = TextBlob(text)
     word_count = len(blob.words)
-    summary = " ".join(blob.sentences[:3]) if len(blob.sentences) > 0 else "No summary available."
+    summary = " ".join(str(s) for s in blob.sentences[:3]) if len(blob.sentences) > 0 else "No summary available."
 
     keywords_found, missing_keywords = [], []
     if job_desc:

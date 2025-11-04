@@ -2,4 +2,6 @@ flask
 pdfplumber
 docx2txt
 textblob
-
+PyPDF2
+nltk
+textstat
